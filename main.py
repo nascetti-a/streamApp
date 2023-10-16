@@ -34,6 +34,7 @@ def fix_image(upload):
 
     st.write(value)
 
+
     # Size of the image in pixels (size of original image)
     # (This is not mandatory)
     width, height = image.size
