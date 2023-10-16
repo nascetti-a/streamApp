@@ -3,7 +3,7 @@ import streamlit as st
 from PIL import Image
 from io import BytesIO
 import base64
-from streamlit_image_coordinates import streamlit_image_coordinates
+#from streamlit_image_coordinates import streamlit_image_coordinates
 
 
 st.set_page_config(layout="wide", page_title="Image Background Remover")
@@ -30,9 +30,9 @@ def fix_image(upload):
     col1.write("Original Image :camera:")
     col1.image(image)
 
-    value = streamlit_image_coordinates(image)
+    #value = streamlit_image_coordinates(image)
 
-    st.write(value)
+    #st.write(value)
 
 
     # Size of the image in pixels (size of original image)
