@@ -2,5 +2,6 @@ pandas
 numpy
 streamlit>=0.88
 streamlit-drawable-canvas>=0.8
+Pillow==9.0.1
 svgpathtools
 svgwrite
