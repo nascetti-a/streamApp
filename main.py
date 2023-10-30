@@ -52,6 +52,8 @@ canvas_result = st_canvas(
 )
 test= st.sidebar.write(Image.open(bg_image).size if bg_image else None)
 
+testt = st.image(Image.open(bg_image) if bg_image else Image.open("./IMG_02099.jpg"))
+
 test2 = st.sidebar.write(bg_color)
 # Do something interesting with the image data and paths
 # if canvas_result.image_data is not None:
