@@ -1,74 +1,63 @@
-import streamlit as st
-#from rembg import remove
+import pandas as pd
 from PIL import Image
-from io import BytesIO
-import base64
-#from streamlit_image_coordinates import streamlit_image_coordinates
+import streamlit as st
+from streamlit_drawable_canvas import st_canvas
 
 
-st.set_page_config(layout="wide", page_title="Image Background Remover")
-
-st.write("## Test StreamApp")
-st.write(
-    ":dog: Try uploading an image"
-)
-st.sidebar.write("## Upload and download :gear:")
-
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-
-# Download the fixed image
-
-def convert_image(img):
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    byte_im = buf.getvalue()
-    return byte_im
 
 
-def fix_image(upload):
-    image = Image.open(upload)
-    col1.write("Original Image :camera:")
-    col1.image(image)
-
-    #value = streamlit_image_coordinates(image)
-
-    #st.write(value)
-
-
-    # Size of the image in pixels (size of original image)
-    # (This is not mandatory)
-    width, height = image.size
-
-    st.write('The image size is w and h ', width, height)
-    xresize = st.sidebar.slider("crop x", min_value=0, max_value=int(width/2))
-    yresize = st.sidebar.slider("crop y", min_value=0, max_value=int(height / 2))
-    # Setting the points for cropped image
-    #left = 5
-    #top = height / 4
-    #right = 164
-    #bottom = 3 * height / 4
-
-    # Cropped image of above dimension
-    # (It will not change original image)
-    fixed = image.crop((xresize, yresize, width-xresize, height-yresize))
-
-    col2.write("Fixed Image :wrench:")
-    col2.image(fixed)
-    st.sidebar.markdown("\n")
-    st.sidebar.download_button("Download fixed image", convert_image(fixed), "fixed.png", "image/png")
-
-
-col1, col2 = st.columns(2)
-my_upload = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-
-number = st.sidebar.number_input('Insert a number')
-
-st.write('The current number is ', number)
-
-if my_upload is not None:
-    if my_upload.size > MAX_FILE_SIZE:
-        st.error("The uploaded file is too large. Please upload an image smaller than 5MB.")
+def expand2square(imgpath, background_color = (0,0,0)):
+    pil_img = Image.open(imgpath)
+    width, height = pil_img.size
+    if width == height:
+        return pil_img
+    elif width > height:
+        result = Image.new(pil_img.mode, (width, width), background_color)
+        result.paste(pil_img, (0, (width - height) // 2))
+        return result.resize((700, 700))
     else:
-        fix_image(upload=my_upload)
-else:
-    fix_image("./zebra.jpg")
+        result = Image.new(pil_img.mode, (height, height), background_color)
+        result.paste(pil_img, ((height - width) // 2, 0))
+        return result.resize((700, 700))
+
+# Specify canvas parameters in application
+drawing_mode = st.sidebar.selectbox(
+    "Drawing tool:", ("point", "line", "rect", "circle", "transform")
+)
+
+stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
+if drawing_mode == 'point':
+    point_display_radius = st.sidebar.slider("Point display radius: ", 1, 25, 3)
+stroke_color = st.sidebar.color_picker("Stroke color hex: ")
+bg_color = st.sidebar.color_picker("Background color hex: ", "#eee")
+
+bg_image = "./IMG_02099.jpg"
+bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
+
+realtime_update = st.sidebar.checkbox("Update in realtime", True)
+
+# Create a canvas component
+canvas_result = st_canvas(
+    fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+    stroke_width=stroke_width,
+    stroke_color=stroke_color,
+    background_color=bg_color,
+    background_image=expand2square(bg_image) if bg_image else expand2square("./IMG_02099.jpg"),
+    update_streamlit=realtime_update,
+    height=700,
+    width=700,
+    drawing_mode=drawing_mode,
+    point_display_radius=point_display_radius if drawing_mode == 'point' else 0,
+    key="canvas",
+)
+test= st.sidebar.write(Image.open(bg_image).size if bg_image else None)
+
+test2 = st.sidebar.write(bg_color)
+# Do something interesting with the image data and paths
+# if canvas_result.image_data is not None:
+#    st.image(canvas_result.image_data)
+if canvas_result.json_data is not None:
+    objects = pd.json_normalize(canvas_result.json_data["objects"])  # need to convert obj to str because PyArrow
+    for col in objects.select_dtypes(include=['object']).columns:
+        objects[col] = objects[col].astype("str")
+    st.dataframe(objects)
